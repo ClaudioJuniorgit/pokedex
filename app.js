@@ -43,17 +43,21 @@ const getPokemonsImgs = async ids => {
 }
 
 const paginationInfo = (() => {
-  let  
-  
-  return { }
-})
+  const limit = 15
+  let offset = 0
 
-const limit = 15
-let offset = 0
+  const getLimit = () => limit
+  const getOffset = () => offset
+  const incrementOffSet = () =>  offset += limit
+  
+  return { getLimit, getOffset, incrementOffSet }
+})()
+
 
 const getPokemons = async () => {
   try {
-    const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`);
+    const { getLimit, getOffset, incrementOffSet } = paginationInfo
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${getLimit()}&offset=${getOffset()}`);
 
     if (!response.ok) {
       throw new Error("não foi possivel obter as informações");
@@ -65,7 +69,7 @@ const getPokemons = async () => {
     const imgs = await getPokemonsImgs(ids)
     const pokemons = ids.map((id, i) => ({ id, name:pokeApiResults[i].name, types: types[i], imgUrl: imgs[i] }))
 
-    offset += limit
+    incrementOffSet()
 
     return pokemons
   } catch (error) {
@@ -113,14 +117,14 @@ const handleNextPokemonsRender = () => {
 
     observer.unobserve(lastPokemon.target)
 
-    if (offset == 150) {
+    if (paginationInfo.getOffset() == 150) {
       return
     }
 
     const pokemons = await getPokemons()
     renderPokemons(pokemons)
     observerLastPokemon(pokemonsObserver)
-  })
+  }, { rootMargin: '500px' })
 
   observerLastPokemon(pokemonsObserver)
 }
